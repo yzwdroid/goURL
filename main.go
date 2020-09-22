@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"sync"
+	"time"
 
 	"github.com/gookit/color"
 	"mvdan.cc/xurls/v2"
@@ -22,20 +24,30 @@ func removeDuplicate(urls []string) []string {
 	return result
 }
 
-func checkStatus(link string) {
-	resp, err := http.Head(link)
+func checkStatus(link string, wg *sync.WaitGroup) {
+	defer wg.Done()
+	client := http.Client{
+		Timeout: 6 * time.Second,
+	}
+	resp, err := client.Head(link)
 	if err != nil {
-		fmt.Println(err)
+		color.Red.Println(link)
 		return
 	}
-	if resp.StatusCode == 200 {
+	switch resp.StatusCode {
+	case 200:
 		color.Green.Println(link, "is alive")
+	case 400, 404:
+		color.Cyan.Println(link, "is bad")
+	default:
+		fmt.Println(link)
 	}
 }
 
 func main() {
 	if len(os.Args) == 1 {
-		fmt.Println(`usage called
+		fmt.Println(`
+usage called
 goURL filename
 goURL -v filename
 		`)
@@ -62,8 +74,11 @@ goURL -v filename
 	println(len(urls))
 	color.Green.Println("hello world")
 
+	var wg sync.WaitGroup
 	for _, u := range urls {
-		checkStatus(u)
+		wg.Add(1)
+		go checkStatus(u, &wg)
 	}
-	// var wg sync.WaitGroup
+	wg.Wait()
+	// var wg sync.WadditGroup
 }
