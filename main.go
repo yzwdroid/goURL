@@ -28,20 +28,20 @@ func removeDuplicate(urls []string) []string {
 func checkStatus(link string, wg *sync.WaitGroup) {
 	defer wg.Done()
 	client := http.Client{
-		Timeout: 2 * time.Second,
+		Timeout: 5 * time.Second,
 	}
 	resp, err := client.Head(link)
 	if err != nil {
-		fmt.Println(link, "is unknown")
+		color.Gray.Println(link, "is unknown")
 		return
 	}
 	switch resp.StatusCode {
 	case 200:
-		color.Green.Println(link, "is alive")
+		color.Green.Println(resp.StatusCode, link, "is alive")
 	case 400, 404:
-		color.Red.Println(link, "is bad")
+		color.Red.Println(resp.StatusCode, link, "is bad")
 	default:
-		fmt.Println(link, "is unknown")
+		color.Gray.Println(resp.StatusCode, link, "is unknown")
 	}
 }
 
@@ -57,14 +57,15 @@ func main() {
 
 	if len(os.Args) == 1 {
 		fmt.Println(`
-usage: ./goURL filename
-example: ./goURL urls.txt, ./goURL *.txt
-goURL -v or --version check version.
+name: goRUL
+usage: go run main.go filenames
+example: go run main.go urls.txt; go run main.go *.txt
+go run main.go -v or --version check version.
 		`)
 		os.Exit(-1)
 	}
 
-	fmt.Println(os.Args[1:])
+	fmt.Println("The files need to check", os.Args[1:])
 	var dat []byte
 	for _, file := range os.Args[1:] {
 		d, err := ioutil.ReadFile(file)
@@ -79,9 +80,9 @@ goURL -v or --version check version.
 	rxStrict := xurls.Strict()
 	// urls is a slice of strings
 	urls := rxStrict.FindAllString(string(dat), -1)
-	println(len(urls))
+	println(len(urls), "urls extract from files")
 	urls = removeDuplicate(urls)
-	println(len(urls))
+	println(len(urls), "urls after remove duplications")
 
 	// wait for multiple goroutines to finish
 	var wg sync.WaitGroup
