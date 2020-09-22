@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gookit/color"
+	flag "github.com/spf13/pflag"
 	"mvdan.cc/xurls/v2"
 )
 
@@ -27,29 +28,38 @@ func removeDuplicate(urls []string) []string {
 func checkStatus(link string, wg *sync.WaitGroup) {
 	defer wg.Done()
 	client := http.Client{
-		Timeout: 6 * time.Second,
+		Timeout: 2 * time.Second,
 	}
 	resp, err := client.Head(link)
 	if err != nil {
-		color.Red.Println(link)
+		fmt.Println(link, "is unknown")
 		return
 	}
 	switch resp.StatusCode {
 	case 200:
 		color.Green.Println(link, "is alive")
 	case 400, 404:
-		color.Cyan.Println(link, "is bad")
+		color.Red.Println(link, "is bad")
 	default:
-		fmt.Println(link)
+		fmt.Println(link, "is unknown")
 	}
 }
 
+// pflag supports -v or --version
+var version = flag.BoolP("version", "v", false, "print out version info")
+
 func main() {
+	flag.Parse()
+	if *version == true {
+		fmt.Println("goURL version 0.1")
+		return
+	}
+
 	if len(os.Args) == 1 {
 		fmt.Println(`
-usage called
-goURL filename
-goURL -v filename
+usage: ./goURL filename
+example: ./goURL urls.txt, ./goURL *.txt
+goURL -v or --version check version.
 		`)
 		os.Exit(-1)
 	}
@@ -63,22 +73,21 @@ goURL -v filename
 		}
 		dat = append(dat, d...)
 	}
-	// var ip *int = flag.Int("flagname", 1234, "help message for flagname")
-	// flag.Parse
 
+	// use xurls tool to exact links from file. Strict mod only match http://
+	// and https:// schema
 	rxStrict := xurls.Strict()
 	// urls is a slice of strings
 	urls := rxStrict.FindAllString(string(dat), -1)
 	println(len(urls))
 	urls = removeDuplicate(urls)
 	println(len(urls))
-	color.Green.Println("hello world")
 
+	// wait for multiple goroutines to finish
 	var wg sync.WaitGroup
 	for _, u := range urls {
 		wg.Add(1)
 		go checkStatus(u, &wg)
 	}
 	wg.Wait()
-	// var wg sync.WadditGroup
 }
