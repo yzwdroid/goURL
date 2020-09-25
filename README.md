@@ -9,6 +9,17 @@ After clone the repo,
 ```bash
 cd goURL
 
+#For Windows
+./goURL.exe urls.txt
+
+# For Linux
+./goURL-Linux urls.txt
+
+# For macOS
+./goURL-macOS urls.txt
+
+OR
+
 go run main.go *.txt
 
 go run main.go urls2.txt
