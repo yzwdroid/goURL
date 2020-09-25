@@ -1,6 +1,6 @@
 # goURL
 
-check dead links inside a file.
+check dead links inside files.
 
 # Usage
 
@@ -9,7 +9,7 @@ After clone the repo,
 ```bash
 cd goURL
 
-#For Windows
+# For Windows
 ./goURL.exe urls.txt
 
 # For Linux
@@ -41,10 +41,10 @@ go run main.go urls2.txt
 
 `go run main.go *.txt`
 
-- colorfull output
+- colorfull outputs
 bad URLs in red, good URLs in green, unknown URLs in gray
 
 - support parallelization using go routine
 
-- optimize network code by only request header
+- optimize network code by only requesting for headers
 
