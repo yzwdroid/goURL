@@ -50,7 +50,7 @@ var version = flag.BoolP("version", "v", false, "print out version info")
 
 func main() {
 	flag.Parse()
-	if *version == true {
+	if *version {
 		fmt.Println("goURL version 0.1")
 		return
 	}
