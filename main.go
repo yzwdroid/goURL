@@ -38,6 +38,14 @@ func checkStatus(link string, wg *sync.WaitGroup) {
 	switch resp.StatusCode {
 	case 200:
 		color.Green.Println(resp.StatusCode, link, "is alive")
+	case 300:
+		color.Yellow.Println(resp.StatusCode, link, "it's alive, multiple choices")
+	case 301:
+		color.Yellow.Println(resp.StatusCode, link, "it's alive, moved permanently")
+	case 307:
+		color.Yellow.Println(resp.StatusCode, link, "it's alive, found but its a temporary redirect")
+	case 308:
+		color.Yellow.Println(resp.StatusCode, link, "it's alive, permanent redirect")
 	case 400, 404:
 		color.Red.Println(resp.StatusCode, link, "is bad")
 	default:
