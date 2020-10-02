@@ -42,7 +42,7 @@ go run main.go urls2.txt
 `go run main.go *.txt`
 
 - colorfull outputs
-bad URLs in red, good URLs in green, unknown URLs in gray
+bad URLs in red, good URLs in green, unknown URLs in gray, redirect URLS in yellow,
 
 - support parallelization using go routine
 
