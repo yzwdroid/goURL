@@ -13,6 +13,11 @@ import (
 	"mvdan.cc/xurls/v2"
 )
 
+type urlStatus struct {
+	URL    string
+	Status int
+}
+
 func removeDuplicate(urls []string) []string {
 	result := make([]string, 0, len(urls))
 	temp := map[string]struct{}{}
@@ -66,6 +71,47 @@ func checkStatus(link string, wg *sync.WaitGroup) {
 	}
 }
 
+func checkStatusNoColor(link string, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
+	resp, err := client.Head(link)
+	if err != nil {
+		fmt.Println(link, "is unknown")
+		return
+	}
+	switch resp.StatusCode {
+	case 200:
+		fmt.Println(resp.StatusCode, link, "is alive, [OK]")
+	case 300:
+		fmt.Println(resp.StatusCode, link, "it's alive, [Multiple Choices]")
+	case 301:
+		fmt.Println(resp.StatusCode, link, "it's alive, [Found but its moved permanently]")
+	case 307:
+		fmt.Println(resp.StatusCode, link, "it's alive, [Found but its a temporary redirect]")
+	case 308:
+		fmt.Println(resp.StatusCode, link, "it's alive, [Found but its a permanent redirect]")
+	case 400:
+		fmt.Println(resp.StatusCode, link, "is bad, [Bad Request]")
+	case 401:
+		fmt.Println(resp.StatusCode, link, "is bad, [Unauthorized]")
+	case 402:
+		fmt.Println(resp.StatusCode, link, "is bad, [Payment Required]")
+	case 403:
+		fmt.Println(resp.StatusCode, link, "is bad, [Forbidden]")
+	case 404:
+		fmt.Println(resp.StatusCode, link, "is bad, [Not Found]")
+	case 410:
+		fmt.Println(resp.StatusCode, link, "is bad, [Gone]")
+	case 500:
+		fmt.Println(resp.StatusCode, link, "is bad, [Internal Server Error]")
+	default:
+		fmt.Println(resp.StatusCode, link, "is unknown")
+	}
+}
+
 // pflag supports -v or --version
 var version = flag.BoolP("version", "v", false, "print out version info")
 
@@ -86,7 +132,7 @@ go run main.go -v or --version check version.
 		os.Exit(-1)
 	}
 
-	fmt.Println("The files need to check", os.Args[1:])
+	//fmt.Println("The files need to check", os.Args[1:])
 	var dat []byte
 	for _, file := range os.Args[1:] {
 		d, err := ioutil.ReadFile(file)
@@ -101,15 +147,19 @@ go run main.go -v or --version check version.
 	rxStrict := xurls.Strict()
 	// urls is a slice of strings
 	urls := rxStrict.FindAllString(string(dat), -1)
-	println(len(urls), "urls extract from files")
 	urls = removeDuplicate(urls)
-	println(len(urls), "urls after remove duplications")
 
 	// wait for multiple goroutines to finish
 	var wg sync.WaitGroup
 	for _, u := range urls {
 		wg.Add(1)
-		go checkStatus(u, &wg)
+		if os.Getenv("CLICOLOR") == "1" {
+			go checkStatus(u, &wg)
+		} else if os.Getenv("CLICOLOR") == "0" {
+			go checkStatusNoColor(u, &wg)
+		} else {
+			panic("Please set your CLICOLOR env variable.")
+		}
 	}
 	wg.Wait()
 }
