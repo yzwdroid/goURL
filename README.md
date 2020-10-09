@@ -2,6 +2,8 @@
 
 check dead links inside files.
 
+![Alt Text](https://dev-to-uploads.s3.amazonaws.com/i/yczaka2e9vazsg49i4l8.gif)
+
 # Usage
 
 After clone the repo, 
