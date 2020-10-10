@@ -1,11 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"sync"
+
 	"time"
 
 	"github.com/gookit/color"
@@ -112,8 +115,25 @@ func checkStatusNoColor(link string, wg *sync.WaitGroup) {
 	}
 }
 
+func checkStatusJSON(link string, ch chan urlStatus) {
+
+	us := urlStatus{link, 0}
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
+	resp, err := client.Head(link)
+	if err != nil {
+		ch <- us
+		return
+	}
+	us.Status = resp.StatusCode
+	ch <- us
+}
+
 // pflag supports -v or --version
 var version = flag.BoolP("version", "v", false, "print out version info")
+var js = flag.BoolP("json", "j", false, "output json format to stdout")
+var fp = flag.StringP("file", "f", "", "file name to check")
 
 func main() {
 	flag.Parse()
@@ -132,14 +152,9 @@ go run main.go -v or --version check version.
 		os.Exit(-1)
 	}
 
-	//fmt.Println("The files need to check", os.Args[1:])
-	var dat []byte
-	for _, file := range os.Args[1:] {
-		d, err := ioutil.ReadFile(file)
-		if err != nil {
-			panic(err)
-		}
-		dat = append(dat, d...)
+	dat, err := ioutil.ReadFile(*fp)
+	if err != nil {
+		panic(err)
 	}
 
 	// use xurls tool to exact links from file. Strict mod only match http://
@@ -151,15 +166,36 @@ go run main.go -v or --version check version.
 
 	// wait for multiple goroutines to finish
 	var wg sync.WaitGroup
-	for _, u := range urls {
-		wg.Add(1)
-		if os.Getenv("CLICOLOR") == "1" {
-			go checkStatus(u, &wg)
-		} else if os.Getenv("CLICOLOR") == "0" {
-			go checkStatusNoColor(u, &wg)
-		} else {
-			panic("Please set your CLICOLOR env variable.")
+
+	if *js {
+		ch := make(chan urlStatus)
+		s := make([]urlStatus, 0)
+
+		for _, u := range urls {
+			go checkStatusJSON(u, ch)
 		}
+
+		for range urls {
+			it := <-ch
+			s = append(s, it)
+		}
+
+		data, err := json.Marshal(s)
+		if err != nil {
+			log.Fatalf("JSON marshaling failed: %s", err)
+		}
+		os.Stdout.WriteString(string(data))
+	} else {
+		for _, u := range urls {
+			wg.Add(1)
+			if os.Getenv("CLICOLOR") == "1" {
+				go checkStatus(u, &wg)
+			} else if os.Getenv("CLICOLOR") == "0" {
+				go checkStatusNoColor(u, &wg)
+			} else {
+				panic("Please set your CLICOLOR env variable.")
+			}
+		}
+		wg.Wait()
 	}
-	wg.Wait()
 }
