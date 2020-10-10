@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"sync"
@@ -12,6 +14,11 @@ import (
 	flag "github.com/spf13/pflag"
 	"mvdan.cc/xurls/v2"
 )
+
+type urlStatus struct {
+	URL    string
+	Status int
+}
 
 func removeDuplicate(urls []string) []string {
 	result := make([]string, 0, len(urls))
@@ -66,11 +73,29 @@ func checkStatus(link string, wg *sync.WaitGroup) {
 	}
 }
 
+func checkStatusJSON(link string, ch chan urlStatus) {
+
+	us := urlStatus{link, 0}
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
+	resp, err := client.Head(link)
+	if err != nil {
+		ch <- us
+		return
+	}
+	us.Status = resp.StatusCode
+	ch <- us
+}
+
 // pflag supports -v or --version
 var version = flag.BoolP("version", "v", false, "print out version info")
+var js = flag.BoolP("json", "j", false, "output json format to stdout")
+var fp = flag.StringP("file", "f", "", "file name to check")
 
 func main() {
 	flag.Parse()
+	fmt.Println(*js)
 	if *version {
 		fmt.Println("goURL version 0.1")
 		return
@@ -87,13 +112,10 @@ go run main.go -v or --version check version.
 	}
 
 	fmt.Println("The files need to check", os.Args[1:])
-	var dat []byte
-	for _, file := range os.Args[1:] {
-		d, err := ioutil.ReadFile(file)
-		if err != nil {
-			panic(err)
-		}
-		dat = append(dat, d...)
+
+	dat, err := ioutil.ReadFile(*fp)
+	if err != nil {
+		panic(err)
 	}
 
 	// use xurls tool to exact links from file. Strict mod only match http://
@@ -107,9 +129,30 @@ go run main.go -v or --version check version.
 
 	// wait for multiple goroutines to finish
 	var wg sync.WaitGroup
-	for _, u := range urls {
-		wg.Add(1)
-		go checkStatus(u, &wg)
+
+	if *js {
+		ch := make(chan urlStatus)
+		s := make([]urlStatus, 0)
+
+		for _, u := range urls {
+			go checkStatusJSON(u, ch)
+		}
+
+		for range urls {
+			it := <-ch
+			s = append(s, it)
+		}
+
+		data, err := json.Marshal(s)
+		if err != nil {
+			log.Fatalf("JSON marshaling failed: %s", err)
+		}
+		os.Stdout.WriteString(string(data))
+	} else {
+		for _, u := range urls {
+			wg.Add(1)
+			go checkStatus(u, &wg)
+		}
+		wg.Wait()
 	}
-	wg.Wait()
 }
