@@ -9,22 +9,14 @@ check dead links inside files.
 After clone the repo, 
 
 ```bash
-cd goURL
+export CLICOLOR=1
 
-# For Windows
-./goURL.exe urls.txt
+go run main.go -f urls.txt
 
-# For Linux
-./goURL-Linux urls.txt
+go run main.go -f urls2.txt
 
-# For macOS
-./goURL-macOS urls.txt
-
-OR
-
-go run main.go *.txt
-
-go run main.go urls2.txt
+// to ignore url patterns in file ignore.txt
+go run main.go -f urls2.txt -f
 ```
 
 # Features
@@ -39,9 +31,6 @@ go run main.go urls2.txt
 
 `go run main.go --version`
 
-- glob patterns
-
-`go run main.go *.txt`
 
 - colorfull outputs
 bad URLs in red, good URLs in green, unknown URLs in gray, redirect URLS in yellow,

@@ -1,3 +1,4 @@
 http://google.ca
 http://google.com
 https://httpstat.us/300
+https://seneca.ca

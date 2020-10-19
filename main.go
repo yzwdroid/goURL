@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"regexp"
+	"strings"
 	"sync"
 
 	"time"
@@ -130,10 +133,36 @@ func checkStatusJSON(link string, ch chan urlStatus) {
 	ch <- us
 }
 
+func ignoreURL(f string) []string {
+	var urls []string
+	file, err := os.Open(f)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	re := regexp.MustCompile("^(#|https?://)")
+	for scanner.Scan() {
+		if !re.Match(scanner.Bytes()) {
+			fmt.Println("Ignore file invalid")
+			os.Exit(1)
+		}
+		if line := scanner.Text(); string(line[0]) != "#" {
+			urls = append(urls, line)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+	return urls
+}
+
 // pflag supports -v or --version
 var version = flag.BoolP("version", "v", false, "print out version info")
 var js = flag.BoolP("json", "j", false, "output json format to stdout")
 var fp = flag.StringP("file", "f", "", "file name to check")
+var ignore = flag.BoolP("ignore", "i", false, "ignore url patterns")
 
 func main() {
 	flag.Parse()
@@ -163,6 +192,24 @@ go run main.go -v or --version check version.
 	// urls is a slice of strings
 	urls := rxStrict.FindAllString(string(dat), -1)
 	urls = removeDuplicate(urls)
+
+	if *ignore {
+		var tp []string
+		s := ignoreURL("ignore.txt")
+		for _, link := range urls {
+			valid := true
+			for _, url := range s {
+				if strings.HasPrefix(link, url) {
+					valid = false
+					break
+				}
+			}
+			if valid {
+				tp = append(tp, link)
+			}
+		}
+		urls = tp
+	}
 
 	// wait for multiple goroutines to finish
 	var wg sync.WaitGroup
