@@ -190,11 +190,9 @@ go run main.go -v or --version check version.
 			wg.Add(1)
 			if os.Getenv("CLICOLOR") == "1" {
 				go checkStatus(u, &wg)
-			} else if os.Getenv("CLICOLOR") == "0" {
-				go checkStatusNoColor(u, &wg)
 			} else {
-				panic("Please set your CLICOLOR env variable.")
-			}
+				go checkStatusNoColor(u, &wg)
+			} 
 		}
 		wg.Wait()
 	}
