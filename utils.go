@@ -3,13 +3,14 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/gookit/color"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
 	"sync"
 	"time"
+
+	"github.com/gookit/color"
 )
 
 type urlStatus struct {
@@ -29,7 +30,7 @@ func removeDuplicate(urls []string) []string {
 	return result
 }
 
-func checkStatus(link string, wg *sync.WaitGroup) {
+func checkStatus(link string, failOnly bool, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	client := http.Client{
@@ -40,6 +41,12 @@ func checkStatus(link string, wg *sync.WaitGroup) {
 		color.Gray.Println(link, "is unknown")
 		return
 	}
+
+	// if in fail only mode only return the urls that returned > 400
+	if failOnly && resp.StatusCode < 400 {
+		return
+	}
+
 	switch resp.StatusCode {
 	case 200:
 		color.Green.Println(resp.StatusCode, link, "is alive, [OK]")
@@ -70,7 +77,7 @@ func checkStatus(link string, wg *sync.WaitGroup) {
 	}
 }
 
-func checkStatusNoColor(link string, wg *sync.WaitGroup) {
+func checkStatusNoColor(link string, failOnly bool, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	client := http.Client{
@@ -81,6 +88,12 @@ func checkStatusNoColor(link string, wg *sync.WaitGroup) {
 		fmt.Println(link, "is unknown")
 		return
 	}
+
+	// if in fail only mode only return the urls that returned > 400
+	if failOnly && resp.StatusCode < 400 {
+		return
+	}
+
 	switch resp.StatusCode {
 	case 200:
 		fmt.Println(resp.StatusCode, link, "is alive, [OK]")
