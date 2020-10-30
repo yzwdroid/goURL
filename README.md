@@ -16,16 +16,16 @@ go run main.go -f urls.txt
 go run main.go -f urls2.txt
 
 // to ignore url patterns in file ignore.txt
-go run main.go -f urls2.txt -f
+go run main.go -f urls2.txt -i true
 ```
 
 # Features
 
-- Check usage
+- show usage
  
 `go run main.go`
 
-- Check version
+- show version
 
 `go run main.go -v`
 
