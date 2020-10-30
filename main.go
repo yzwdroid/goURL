@@ -24,6 +24,7 @@ var version = flag.BoolP("version", "v", false, "print out version info")
 var js = flag.BoolP("json", "j", false, "output json format to stdout")
 var fp = flag.StringP("file", "f", "", "file name to check")
 var ignore = flag.BoolP("ignore", "i", false, "ignore url patterns")
+var failOnly = flag.Bool("fails", false, "show only urls that failed")
 
 func main() {
 	flag.Parse()
@@ -95,10 +96,10 @@ go run main.go -v or --version check version.
 		for _, u := range urls {
 			wg.Add(1)
 			if os.Getenv("CLICOLOR") == "1" {
-				go checkStatus(u, &wg)
+				go checkStatus(u, *failOnly, &wg)
 			} else {
-				go checkStatusNoColor(u, &wg)
-			} 
+				go checkStatusNoColor(u, *failOnly, &wg)
+			}
 		}
 		wg.Wait()
 	}
