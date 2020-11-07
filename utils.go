@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -16,6 +18,43 @@ import (
 type urlStatus struct {
 	URL    string
 	Status int
+}
+
+type post struct {
+	ID  string
+	URL string
+}
+
+func dataTelscope() []byte {
+	var data []byte
+	var posts []post
+	resp, err := http.Get("http://localhost:3000/posts")
+	check(err)
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK {
+		body, err := ioutil.ReadAll(resp.Body)
+		check(err)
+		if err := json.Unmarshal(body, &posts); err != nil {
+			panic(err)
+		}
+		for _, p := range posts {
+			resp, err := http.Get("http://localhost:3000" + p.URL)
+			if err != nil {
+				fmt.Println(err)
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode == http.StatusOK {
+				bodyData, err := ioutil.ReadAll(resp.Body)
+				if err != nil {
+					fmt.Println(err)
+				}
+				data = append(data, bodyData...)
+			}
+		}
+	}
+
+	return data
 }
 
 func removeDuplicate(urls []string) []string {

@@ -25,6 +25,7 @@ var js = flag.BoolP("json", "j", false, "output json format to stdout")
 var fp = flag.StringP("file", "f", "", "file name to check")
 var ignore = flag.BoolP("ignore", "i", false, "ignore url patterns")
 var failOnly = flag.Bool("fails", false, "show only urls that failed")
+var urlFlag = flag.BoolP("url", "u", false, "read telescope restful API")
 
 func main() {
 	flag.Parse()
@@ -43,14 +44,20 @@ go run main.go -v or --version check version.
 		os.Exit(-1)
 	}
 
-	dat, err := ioutil.ReadFile(*fp)
-	check(err)
-
+	var urls []string
+	var dat []byte
+	if *urlFlag {
+		dat = dataTelscope()
+	} else {
+		var err error
+		dat, err = ioutil.ReadFile(*fp)
+		check(err)
+	}
 	// use xurls tool to exact links from file. Strict mod only match http://
 	// and https:// schema
 	rxStrict := xurls.Strict()
 	// urls is a slice of strings
-	urls := rxStrict.FindAllString(string(dat), -1)
+	urls = rxStrict.FindAllString(string(dat), -1)
 	urls = removeDuplicate(urls)
 
 	if *ignore {
