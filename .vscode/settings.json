@@ -1,0 +1,6 @@
+{
+    "go.autocompleteUnimportedPackages": true,
+    "go.installDependenciesWhenBuilding": true,
+    "go.useLanguageServer": true,
+    "go.formatTool": "gofmt"
+}
