@@ -69,13 +69,25 @@ func removeDuplicate(urls []string) []string {
 	return result
 }
 
+func getStatusFromLink(link string) (int, error) {
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
+	resp, err := client.Head(link)
+	if err != nil {
+		color.Gray.Println(link, "is unknown")
+		return 0, err
+	}
+	return resp.StatusCode, nil
+}
+
 func checkStatus(link string, failOnly bool, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	client := http.Client{
 		Timeout: 5 * time.Second,
 	}
-	resp, err := client.Head(link)
+	resp, err := getStatusFromLink(link)
 	if err != nil {
 		color.Gray.Println(link, "is unknown")
 		return
