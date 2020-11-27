@@ -69,50 +69,58 @@ func removeDuplicate(urls []string) []string {
 	return result
 }
 
-func checkStatus(link string, failOnly bool, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func getStatusFromLink(link string) (int, error) {
 	client := http.Client{
 		Timeout: 5 * time.Second,
 	}
 	resp, err := client.Head(link)
 	if err != nil {
 		color.Gray.Println(link, "is unknown")
-		return
+		return 0, err
+	}
+	return resp.StatusCode, nil
+}
+
+func checkStatus(link string, failOnly bool, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	resp, err := getStatusFromLink(link)
+	if err != nil {
+		fmt.Println(err)
 	}
 
 	// if in fail only mode only return the urls that returned > 400
-	if failOnly && resp.StatusCode < 400 {
+	if failOnly && resp < 400 {
 		return
 	}
 
-	switch resp.StatusCode {
+	switch resp {
 	case 200:
-		color.Green.Println(resp.StatusCode, link, "is alive, [OK]")
+		color.Green.Println(resp, link, "is alive, [OK]")
 	case 300:
-		color.Yellow.Println(resp.StatusCode, link, "it's alive, [Multiple Choices]")
+		color.Yellow.Println(resp, link, "it's alive, [Multiple Choices]")
 	case 301:
-		color.Yellow.Println(resp.StatusCode, link, "it's alive, [Found but its moved permanently]")
+		color.Yellow.Println(resp, link, "it's alive, [Found but its moved permanently]")
 	case 307:
-		color.Yellow.Println(resp.StatusCode, link, "it's alive, [Found but its a temporary redirect]")
+		color.Yellow.Println(resp, link, "it's alive, [Found but its a temporary redirect]")
 	case 308:
-		color.Yellow.Println(resp.StatusCode, link, "it's alive, [Found but its a permanent redirect]")
+		color.Yellow.Println(resp, link, "it's alive, [Found but its a permanent redirect]")
 	case 400:
-		color.Red.Println(resp.StatusCode, link, "is bad, [Bad Request]")
+		color.Red.Println(resp, link, "is bad, [Bad Request]")
 	case 401:
-		color.Red.Println(resp.StatusCode, link, "is bad, [Unauthorized]")
+		color.Red.Println(resp, link, "is bad, [Unauthorized]")
 	case 402:
-		color.Red.Println(resp.StatusCode, link, "is bad, [Payment Required]")
+		color.Red.Println(resp, link, "is bad, [Payment Required]")
 	case 403:
-		color.Red.Println(resp.StatusCode, link, "is bad, [Forbidden]")
+		color.Red.Println(resp, link, "is bad, [Forbidden]")
 	case 404:
-		color.Red.Println(resp.StatusCode, link, "is bad, [Not Found]")
+		color.Red.Println(resp, link, "is bad, [Not Found]")
 	case 410:
-		color.Red.Println(resp.StatusCode, link, "is bad, [Gone]")
+		color.Red.Println(resp, link, "is bad, [Gone]")
 	case 500:
-		color.Red.Println(resp.StatusCode, link, "is bad, [Internal Server Error]")
+		color.Red.Println(resp, link, "is bad, [Internal Server Error]")
 	default:
-		color.Gray.Println(resp.StatusCode, link, "is unknown")
+		color.Gray.Println(resp, link, "is unknown")
 	}
 }
 
