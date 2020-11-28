@@ -62,3 +62,37 @@ func Test_getStatusFromLink(t *testing.T) {
 		})
 	}
 }
+
+func Test_404_getStatusFromLink(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+		w.Write([]byte("Not Found"))
+	}))
+	defer ts.Close()
+	url := ts.URL
+
+	type args struct {
+		link string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    int
+		wantErr error
+	}{
+		// TODO: Add test cases.
+		{"ok", args{url}, 404, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := getStatusFromLink(tt.args.link)
+			if err != nil {
+				t.Errorf("getStatusFromLink() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("getStatusFromLink() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
