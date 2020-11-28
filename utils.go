@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	"mvdan.cc/xurls/v2"
+
 	"github.com/gookit/color"
 )
 
@@ -23,6 +25,12 @@ type urlStatus struct {
 type post struct {
 	ID  string
 	URL string
+}
+
+func extractURL(str string) []string {
+	rxStrict := xurls.Strict()
+	foundUrls := rxStrict.FindAllString(str, -1)
+	return foundUrls
 }
 
 func dataTelscope() []byte {
