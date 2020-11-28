@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
 )
@@ -28,6 +30,13 @@ func Test_removeDuplicate(t *testing.T) {
 }
 
 func Test_getStatusFromLink(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		w.Write([]byte("Ok"))
+	}))
+	defer ts.Close()
+	url := ts.URL
+
 	type args struct {
 		link string
 	}
@@ -35,14 +44,15 @@ func Test_getStatusFromLink(t *testing.T) {
 		name    string
 		args    args
 		want    int
-		wantErr bool
+		wantErr error
 	}{
 		// TODO: Add test cases.
+		{"ok", args{url}, 200, nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := getStatusFromLink(tt.args.link)
-			if (err != nil) != tt.wantErr {
+			if err != nil {
 				t.Errorf("getStatusFromLink() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
