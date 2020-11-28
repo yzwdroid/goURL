@@ -62,3 +62,18 @@ augroup END
 Install the Go extension. You should immediately see a prompt in the bottom-right corner of your screen titled Analysis Tools Missing. This extension relies on a suite of command-line tools, which must be installed separately. Accept the prompt, or use the Go: Install/Update Tools command.
 
 Also, see the tutorial [https://code.visualstudio.com/docs/languages/go](https://code.visualstudio.com/docs/languages/go)
+
+
+## Tests
+You are welcome to add tests to this project. 
+
+```
+go test filename
+// or 
+go test .
+```
+
+## Test coverage
+```
+go test -cover
+```
