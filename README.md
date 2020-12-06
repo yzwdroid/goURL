@@ -40,3 +40,7 @@ bad URLs in red, good URLs in green, unknown URLs in gray, redirect URLS in yell
 
 - optimize network code by only requesting for headers
 
+# Download the released program.
+
+Please check the release page [ihttps://github.com/yzwdroid/goURL/releases/](https://github.com/yzwdroid/goURL/releases/),and download your system version of this
+program.
